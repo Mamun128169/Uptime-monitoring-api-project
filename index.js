@@ -5,7 +5,7 @@
 
 // Dependencies
 const http = require("http");
-
+const { handleReqRes } = require("./helpers/handleReqRes");
 // app object or module scaffolding
 const app = {};
 
@@ -14,6 +14,9 @@ app.config = {
   port: 3000,
 };
 
+// handle Request and Response
+app.handleReqRes = handleReqRes;
+
 // create Server
 app.createServer = () => {
   const server = http.createServer(app.handleReqRes);
@@ -21,13 +24,6 @@ app.createServer = () => {
   server.listen(app.config.port, () => {
     console.log(`Server running on port ${app.config.port}`);
   });
-};
-
-// handle Request Response
-app.handleReqRes = (req, res) => {
-  // response handle
-  res.write("coding is doing fun! \n");
-  res.end("Hello Programmers!");
 };
 
 // Start the server
