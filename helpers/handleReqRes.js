@@ -35,22 +35,10 @@ handler.handleReqRes = (req, res) => {
   };
 
   // find the chosen route or current route
-  const chosenRoute = routes[trimmedPath]
+  const chosenRouteHandler = routes[trimmedPath]
     ? routes[trimmedPath]
     : notFoundHandler;
-
   // console.log(chosenRoute.toString(), routes);
-
-  chosenRoute(requestProperties, (statusCode, payload) => {
-    statusCode = typeof statusCode === "number" ? statusCode : 500;
-    payload = typeof payload === "object" ? payload : {};
-
-    const payloadString = JSON.stringify(payload);
-
-    // return the final response
-    res.writeHead(statusCode);
-    res.end(payloadString);
-  });
 
   // handling request payload or body or data
   const decoder = new StringDecoder("utf-8");
@@ -63,9 +51,22 @@ handler.handleReqRes = (req, res) => {
   req.on("end", () => {
     realData += decoder.end();
     console.log("request stream data", realData);
+
+    // HandleChosen Route
+    chosenRouteHandler(requestProperties, (statusCode, payload) => {
+      statusCode = typeof statusCode === "number" ? statusCode : 500;
+      payload = typeof payload === "object" ? payload : {};
+
+      const payloadString = JSON.stringify(payload);
+
+      // return the final response
+      res.writeHead(statusCode);
+      res.end(payloadString);
+    });
+
     // response handle
-    res.write("coding is doing fun! \n");
-    res.end("Hello Programmers!");
+    // res.write("coding is doing fun! \n");
+    // res.end("Hello Programmers!");
   });
 };
 
