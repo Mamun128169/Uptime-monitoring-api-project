@@ -10,7 +10,6 @@ const routes = require("../routes");
 const {
   notFoundHandler,
 } = require("../handlers/routeHandlers/NotFoundHandler");
-const decoder = new StringDecoder("utf-8");
 
 // handler object or module scaffolding
 const handler = {};
@@ -43,6 +42,7 @@ handler.handleReqRes = (req, res) => {
 
   // handling request payload or body or data
   let realData = "";
+  const decoder = new StringDecoder("utf-8");
 
   req.on("data", (buffer) => {
     realData += decoder.write(buffer);
@@ -50,7 +50,7 @@ handler.handleReqRes = (req, res) => {
 
   req.on("end", () => {
     realData += decoder.end();
-    console.log("request stream data", realData);
+    console.log("request stream data : ", realData);
 
     // HandleChosen Route
     chosenRouteHandler(requestProperties, (statusCode, payload) => {
@@ -60,7 +60,7 @@ handler.handleReqRes = (req, res) => {
       const payloadString = JSON.stringify(payload);
 
       // return the final response
-      res.writeHead(statusCode);
+      res.writeHead(statusCode, { "Content-Type": "text/plain" });
       res.end(payloadString);
     });
 
