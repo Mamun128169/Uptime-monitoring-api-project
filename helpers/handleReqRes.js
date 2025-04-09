@@ -10,6 +10,7 @@ const routes = require("../routes");
 const {
   notFoundHandler,
 } = require("../handlers/routeHandlers/NotFoundHandler");
+const decoder = new StringDecoder("utf-8");
 
 // handler object or module scaffolding
 const handler = {};
@@ -41,7 +42,6 @@ handler.handleReqRes = (req, res) => {
   // console.log(chosenRoute.toString(), routes);
 
   // handling request payload or body or data
-  const decoder = new StringDecoder("utf-8");
   let realData = "";
 
   req.on("data", (buffer) => {
