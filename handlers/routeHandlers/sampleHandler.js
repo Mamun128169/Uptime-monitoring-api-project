@@ -7,7 +7,7 @@
 const handler = {};
 
 handler.sampleHandler = (requestProperties, callback) => {
-  // console.log("sample req props", requestProperties);
+  console.log("sample req props", requestProperties);
   callback(200, {
     message: "This is the sample route page",
   });

@@ -17,9 +17,9 @@ app.handleReqRes = handleReqRes;
 
 // testing file system
 // @ts-check
-data.delete("test", "demoFile", (err) => {
-  console.log("Error: ", err);
-});
+// data.delete("test", "demoFile", (err) => {
+//   console.log("Error: ", err);
+// });
 
 // create Server
 app.createServer = () => {

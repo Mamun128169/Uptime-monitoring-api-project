@@ -10,6 +10,7 @@ const routes = require("../routes");
 const {
   notFoundHandler,
 } = require("../handlers/routeHandlers/NotFoundHandler");
+const { parseJson } = require("./../helpers/utilities");
 
 // handler object or module scaffolding
 const handler = {};
@@ -50,7 +51,8 @@ handler.handleReqRes = (req, res) => {
 
   req.on("end", () => {
     realData += decoder.end();
-    console.log("request stream data : ", realData);
+    // console.log("request stream data : ", realData);
+    requestProperties.body = parseJson(realData);
 
     // HandleChosen Route
     chosenRouteHandler(requestProperties, (statusCode, payload) => {
@@ -60,7 +62,8 @@ handler.handleReqRes = (req, res) => {
       const payloadString = JSON.stringify(payload);
 
       // return the final response
-      res.writeHead(statusCode, { "Content-Type": "text/plain" });
+      res.setHeader("Content-Type", "application/json");
+      res.writeHead(statusCode);
       res.end(payloadString);
     });
 
