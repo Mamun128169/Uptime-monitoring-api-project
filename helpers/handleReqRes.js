@@ -66,10 +66,6 @@ handler.handleReqRes = (req, res) => {
       res.writeHead(statusCode);
       res.end(payloadString);
     });
-
-    // response handle
-    // res.write("coding is doing fun! \n");
-    // res.end("Hello Programmers!");
   });
 };
 

@@ -5,7 +5,7 @@
 
 // Dependencies
 const lib = require("./../../lib/data");
-const { hash } = require("./../../helpers/utilities");
+const { hash, parseJson } = require("./../../helpers/utilities");
 
 // handler object or module scaffolding
 const handler = {};
@@ -23,9 +23,33 @@ handler.userHandler = (requestProperties, callback) => {
 handler._users = {};
 
 handler._users.get = (requestProperties, callback) => {
-  callback(200, {
-    message: "This is the user get page!",
-  });
+  // console.log(requestProperties);
+  const { queryStringObject: query } = requestProperties;
+
+  // validate phone
+  let phone =
+    typeof query.phone === "string" && query.phone.trim().length === 11
+      ? query.phone
+      : false;
+
+  if (phone) {
+    // read user from users folder by phone
+    lib.read("users", phone, (err, u) => {
+      if (!err) {
+        const user = { ...parseJson(u) };
+        delete user.password;
+        callback(200, user);
+      } else {
+        callback(404, {
+          error: "Requested user was not found!",
+        });
+      }
+    });
+  } else {
+    callback(404, {
+      error: "Invalid user request or invalid user query!",
+    });
+  }
 };
 
 handler._users.post = (requestProperties, callback) => {
