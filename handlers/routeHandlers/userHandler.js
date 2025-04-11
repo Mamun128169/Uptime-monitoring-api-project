@@ -19,9 +19,10 @@ handler.userHandler = (requestProperties, callback) => {
   }
 };
 
-// _user object or _user scaffolding
+// _user object or _user scaffolding for CRUD operations
 handler._users = {};
 
+// READ
 handler._users.get = (requestProperties, callback) => {
   // console.log(requestProperties);
   const { queryStringObject: query } = requestProperties;
@@ -52,6 +53,7 @@ handler._users.get = (requestProperties, callback) => {
   }
 };
 
+// CREATE
 handler._users.post = (requestProperties, callback) => {
   // validate the user's properties
   let { firstName, lastName, phone, password, tosAgreement } =
@@ -119,8 +121,99 @@ handler._users.post = (requestProperties, callback) => {
   }
 };
 
-handler._users.put = (requestProperties, callback) => {};
+// UPDATE
+handler._users.put = (requestProperties, callback) => {
+  // validate the user's properties
+  let { firstName, lastName, phone, password } = requestProperties.body;
 
-handler._users.delete = (requestProperties, callback) => {};
+  // validate firstName
+  firstName =
+    typeof firstName === "string" && firstName.trim().length > 0
+      ? firstName
+      : false;
+
+  // validate lastName
+  lastName =
+    typeof lastName === "string" && lastName.trim().length > 0
+      ? lastName
+      : false;
+
+  // validate phone
+  phone =
+    typeof phone === "string" && phone.trim().length === 11 ? phone : false;
+
+  // validate password
+  password =
+    typeof password === "string" && password.trim().length > 0
+      ? password
+      : false;
+
+  if (phone) {
+    if (firstName || lastName || password) {
+      // find user and update with new data
+      lib.read("users", phone, (err, userData) => {
+        if (!err && userData) {
+          let user = { ...parseJson(userData) };
+          user.firstName = firstName;
+          user.lastName = lastName;
+          user.password = hash(password);
+
+          // store updated data to the user file
+          lib.update("users", phone, user, (err) => {
+            if (!err) {
+              callback(200, {
+                message: "user successfully updated with new data!",
+              });
+            } else {
+              callback(500, {
+                error:
+                  "Internal server error or error while updating the data!",
+              });
+            }
+          });
+        } else {
+          callback(500, {
+            error: "Internal server error or user not found!",
+          });
+        }
+      });
+    }
+  } else {
+    callback(400, {
+      error: "Invalid user request, please provide a valid user phone!",
+    });
+  }
+};
+
+// DELETE
+handler._users.delete = (requestProperties, callback) => {
+  // console.log(requestProperties);
+  const { queryStringObject: query } = requestProperties;
+
+  // validate phone
+  let phone =
+    typeof query.phone === "string" && query.phone.trim().length === 11
+      ? query.phone
+      : false;
+
+  if (phone) {
+    // delete user by phone
+    lib.delete("users", phone, (err) => {
+      if (!err) {
+        callback(200, {
+          message: "Successfully deleted the user!",
+        });
+      } else {
+        callback(500, {
+          error: "Internal server error or error while deleting the user!",
+        });
+      }
+    });
+  } else {
+    callback(400, {
+      error: "Invalid user request, please enter valid phone!",
+    });
+  }
+};
 
 module.exports = handler;
