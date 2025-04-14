@@ -7,7 +7,6 @@
 const http = require("http");
 const { handleReqRes } = require("./helpers/handleReqRes");
 const environment = require("./helpers/environments");
-const data = require("./lib/data");
 
 // app object or module scaffolding
 const app = {};

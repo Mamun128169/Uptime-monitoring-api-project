@@ -6,6 +6,7 @@
 // Dependencies
 const lib = require("./../../lib/data");
 const { hash, parseJson } = require("./../../helpers/utilities");
+const tokenHandler = require("./tokenHandler");
 
 // handler object or module scaffolding
 const handler = {};
@@ -34,18 +35,29 @@ handler._users.get = (requestProperties, callback) => {
       : false;
 
   if (phone) {
-    // read user from users folder by phone
-    lib.read("users", phone, (err, u) => {
-      if (!err) {
-        const user = { ...parseJson(u) };
-        delete user.password;
-        callback(200, user);
-      } else {
-        callback(404, {
-          error: "Requested user was not found!",
-        });
-      }
-    });
+    // validate token and then verify user by token verify
+    let { token } = requestProperties.headersObj;
+    token =
+      typeof token === "string" && token.trim().length === 20 ? token : false;
+
+    if (token) {
+      // read user from users folder by phone
+      lib.read("users", phone, (err, u) => {
+        if (!err) {
+          const user = { ...parseJson(u) };
+          delete user.password;
+          callback(200, user);
+        } else {
+          callback(404, {
+            error: "Requested user was not found!",
+          });
+        }
+      });
+    } else {
+      callback(403, {
+        error: "Authentication failed!",
+      });
+    }
   } else {
     callback(404, {
       error: "Invalid user request or invalid user query!",
@@ -150,33 +162,44 @@ handler._users.put = (requestProperties, callback) => {
 
   if (phone) {
     if (firstName || lastName || password) {
-      // find user and update with new data
-      lib.read("users", phone, (err, userData) => {
-        if (!err && userData) {
-          let user = { ...parseJson(userData) };
-          user.firstName = firstName;
-          user.lastName = lastName;
-          user.password = hash(password);
+      // validate token and then verify user by token verify
+      let { token } = requestProperties.headersObj;
+      token =
+        typeof token === "string" && token.trim().length === 20 ? token : false;
 
-          // store updated data to the user file
-          lib.update("users", phone, user, (err) => {
-            if (!err) {
-              callback(200, {
-                message: "user successfully updated with new data!",
-              });
-            } else {
-              callback(500, {
-                error:
-                  "Internal server error or error while updating the data!",
-              });
-            }
-          });
-        } else {
-          callback(500, {
-            error: "Internal server error or user not found!",
-          });
-        }
-      });
+      if (token) {
+        // find user and update with new data
+        lib.read("users", phone, (err, userData) => {
+          if (!err && userData) {
+            let user = { ...parseJson(userData) };
+            user.firstName = firstName;
+            user.lastName = lastName;
+            user.password = hash(password);
+
+            // store updated data to the user file
+            lib.update("users", phone, user, (err) => {
+              if (!err) {
+                callback(200, {
+                  message: "user successfully updated with new data!",
+                });
+              } else {
+                callback(500, {
+                  error:
+                    "Internal server error or error while updating the data!",
+                });
+              }
+            });
+          } else {
+            callback(500, {
+              error: "Internal server error or user not found!",
+            });
+          }
+        });
+      } else {
+        callback(403, {
+          error: "Authentication failed!",
+        });
+      }
     }
   } else {
     callback(400, {
@@ -187,7 +210,6 @@ handler._users.put = (requestProperties, callback) => {
 
 // DELETE
 handler._users.delete = (requestProperties, callback) => {
-  // console.log(requestProperties);
   const { queryStringObject: query } = requestProperties;
 
   // validate phone
@@ -197,18 +219,29 @@ handler._users.delete = (requestProperties, callback) => {
       : false;
 
   if (phone) {
-    // delete user by phone
-    lib.delete("users", phone, (err) => {
-      if (!err) {
-        callback(200, {
-          message: "Successfully deleted the user!",
-        });
-      } else {
-        callback(500, {
-          error: "Internal server error or error while deleting the user!",
-        });
-      }
-    });
+    // validate token and then verify user by token verify
+    let { token } = requestProperties.headersObj;
+    token =
+      typeof token === "string" && token.trim().length === 20 ? token : false;
+
+    if (token) {
+      // delete user by phone
+      lib.delete("users", phone, (err) => {
+        if (!err) {
+          callback(200, {
+            message: "Successfully deleted the user!",
+          });
+        } else {
+          callback(500, {
+            error: "Internal server error or error while deleting the user!",
+          });
+        }
+      });
+    } else {
+      callback(403, {
+        error: "Authentication failed!",
+      });
+    }
   } else {
     callback(400, {
       error: "Invalid user request, please enter valid phone!",
