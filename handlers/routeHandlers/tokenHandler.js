@@ -183,7 +183,7 @@ handler._token.verify = (id, phone, callback) => {
   lib.read("tokens", id, (err, token) => {
     if (!err && token) {
       const tokenObj = parseJson(token);
-      if (tokenObj.expires > Date.now() && phone === tokenObj) {
+      if (tokenObj.expires > Date.now() && phone === tokenObj.phone) {
         callback(true);
       } else {
         callback(false);
