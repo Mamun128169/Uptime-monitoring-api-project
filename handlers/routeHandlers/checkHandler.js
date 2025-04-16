@@ -27,7 +27,54 @@ handler.checkHandler = (requestProperties, callback) => {
 handler._check = {};
 
 // READ
-handler._check.get = (requestProperties, callback) => {};
+handler._check.get = (requestProperties, callback) => {
+  // validate check id
+  let { id } = requestProperties.queryStringObject;
+
+  id = typeof id === "string" && id.trim().length === 20 ? id : false;
+
+  if (id) {
+    // lookUp the checkObj
+    lib.read("checks", id, (err, checkData) => {
+      if (!err && checkData) {
+        // lookup for token and verify it
+        let { token } = requestProperties.headersObj;
+        token =
+          typeof token === "string" && token.trim().length === 20
+            ? token
+            : false;
+
+        if (token) {
+          tokenHandler._token.verify(
+            token,
+            parseJson(checkData.phone),
+            (isVerified) => {
+              if (isVerified) {
+                callback(200, parseJson(checkData));
+              } else {
+                callback(403, {
+                  error: "Authentication Error, token may have expired!",
+                });
+              }
+            }
+          );
+        } else {
+          callback(403, {
+            error: "Authentication Error, provide a valid token!",
+          });
+        }
+      } else {
+        callback(500, {
+          error: "You have a problem in your request!",
+        });
+      }
+    });
+  } else {
+    callback(400, {
+      error: "You have a problem in your request!",
+    });
+  }
+};
 
 // CREATE
 handler._check.post = (requestProperties, callback) => {
@@ -153,7 +200,115 @@ handler._check.post = (requestProperties, callback) => {
 };
 
 // UPDATE
-handler._check.put = (requestProperties, callback) => {};
+handler._check.put = (requestProperties, callback) => {
+  // validate check id
+  let { id } = requestProperties.queryStringObject;
+
+  id = typeof id === "string" && id.trim().length === 20 ? id : false;
+
+  let { protocol, url, method, successCodes, timeOutSecs } =
+    requestProperties.body;
+
+  protocol =
+    typeof protocol === "string" && ["http", "https"].includes(protocol)
+      ? protocol
+      : false;
+
+  url = typeof url === "string" && url.trim().length > 0 ? url : false;
+
+  method =
+    typeof method === "string" &&
+    ["GET", "POST", "PUT", "DELETE"].includes(method)
+      ? method
+      : false;
+
+  successCodes =
+    typeof successCodes === "object" && Array.isArray(successCodes)
+      ? successCodes
+      : false;
+
+  timeOutSecs =
+    typeof timeOutSecs === "number" && timeOutSecs >= 1 && timeOutSecs <= 5
+      ? timeOutSecs
+      : false;
+
+  if (id) {
+    if (protocol || url || method || successCodes || timeOutSecs) {
+      // lookup the check obj via id
+      lib.read("checks", id, (err, checkData) => {
+        if (!err && checkData) {
+          let { token } = requestProperties.headersObj;
+          token =
+            typeof token === "string" && token.trim().length === 20
+              ? token
+              : false;
+
+          if (token) {
+            const checkObj = parseJson(checkData);
+            tokenHandler._token.verify(token, checkObj.phone, (isVerified) => {
+              if (isVerified) {
+                // update the checkObj with updated properties
+                if (protocol) {
+                  checkObj.protocol = protocol;
+                }
+
+                if (url) {
+                  checkObj.url = url;
+                }
+
+                if (method) {
+                  checkObj.method = method;
+                }
+
+                if (successCodes) {
+                  checkObj.successCodes = successCodes;
+                }
+
+                if (timeOutSecs) {
+                  checkObj.timeOutSecs = timeOutSecs;
+                }
+
+                // update the new check object to the file
+                lib.update("checks", id, checkObj, (err) => {
+                  if (!err) {
+                    callback(200, {
+                      message: "checks Object successfully updated!",
+                    });
+                  } else {
+                    callback(500, {
+                      error:
+                        "Internal server error, failed to update the new check obj to the file!",
+                    });
+                  }
+                });
+              } else {
+                callback(403, {
+                  error: "Authentication Error, token may have expires!",
+                });
+              }
+            });
+          } else {
+            callback(401, {
+              error: "Invalid token please provide a valid token!",
+            });
+          }
+        } else {
+          callback(400, {
+            error: "Invalid id, failed to find the check Object!",
+          });
+        }
+      });
+    } else {
+      callback(400, {
+        error: "Invalid user request you must update one of the things!",
+      });
+    }
+  } else {
+    callback(400, {
+      error: "Invalid check id, please provide a valid one!",
+    });
+  }
+};
 
 // DELETE
 handler._check.delete = (requestProperties, callback) => {};
